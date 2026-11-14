@@ -1,0 +1,18 @@
+Hi!
+
+<?#
+-- 1. Создаем пустой массив
+numbers = {}
+
+-- 2. В цикле добавляем числа от 1 до 5
+for i = 1, 5 do
+    table.insert(numbers, i)
+end
+?>
+
+<?@(i:numbers)
+пип <?= i ?>
+<??(i % 2 ~= 0) ODD <?else> EVEN ?>
+?>
+
+end;

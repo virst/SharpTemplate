@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SharpTemplate.Demo/SharpTemplate.Demo.csproj" />
+  <Project Path="SharpTemplate/SharpTemplate.csproj" />
+</Solution>
