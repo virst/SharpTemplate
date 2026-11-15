@@ -55,6 +55,8 @@ namespace SharpTemplate
 
             public virtual void Processing(StringBuilder sb, string template, Script script)
             {
+                if (Type == BlockType.Else) return;
+
                 if (Childrens.Count == 0)
                 {
                     sb.Append(template.Substring(Start, Length));
@@ -85,6 +87,21 @@ namespace SharpTemplate
 
                     if (template[i] == '<' && template[i + 1] == '?')
                     {
+                        if (template[i + 2] == 'e') //else 
+                        {
+                            i += 2;
+                            if (deep == 0 && template.Substring(i).StartsWith("else>"))
+                            {
+                                currentBlock.Length = i - currentBlock.Start - 2;
+                                if (currentBlock.Length != 0)
+                                    Childrens.Add(currentBlock);
+                                Childrens.Add(new CodeBlock(i) { Type = (BlockType)template[i], Length = 4 });
+                                currentBlock = new CodeBlock(i + 5);
+                            }
+                            i += 5;
+                            continue;
+                        }
+
                         deep++;
                         if (deep != 1) continue;
                         if (i != currentBlock.Start)
@@ -95,22 +112,6 @@ namespace SharpTemplate
                         }
 
                         i += 2;
-                        if (template[i] == 'e') //else 
-                        {
-                            if (template.Substring(i).StartsWith("else>"))
-                            {
-                                if (currentBlock is CodeBlockCondition cblock)
-                                {
-                                    i += 4;
-                                    cblock.ElsePos = i;
-                                }
-                                else
-                                {
-                                    throw new Exception();
-                                }
-                            }
-                            continue;
-                        }
 
                         if (template[i] == '=' || template[i] == '#')
                         {
@@ -159,7 +160,8 @@ namespace SharpTemplate
                 Expression = '=',
                 Code = '#',
                 Loop = '@',
-                Condition = '?'
+                Condition = '?',
+                Else = 'e'
             }
 
             private static (string metod, string param) SplitMetod(string s)
@@ -204,19 +206,19 @@ namespace SharpTemplate
 
             private class CodeBlockCondition(int start) : CodeBlockLoop(start)
             {
-                public int? ElsePos;
-
                 public override void Processing(StringBuilder sb, string template, Script script)
                 {
+                    var ll = Childrens.Select(t => template.Substring(t.Start, t.Length)).ToArray();
                     var result = script.DoString("return " + Code);
+                    var ElsePos = Childrens.FirstOrDefault(t => t.Type == BlockType.Else)?.Start;
                     if (result.Boolean)
                     {
-                        foreach (var c in Childrens.Where(t => ElsePos is null || Start < ElsePos))
+                        foreach (var c in Childrens.Where(t => ElsePos is null || t.Start < ElsePos))
                             c.Processing(sb, template, script);
                     }
                     else
                     {
-                        foreach (var c in Childrens.Where(t => ElsePos is not null && Start > ElsePos))
+                        foreach (var c in Childrens.Where(t => ElsePos is not null && t.Start > ElsePos))
                             c.Processing(sb, template, script);
                     }
                 }

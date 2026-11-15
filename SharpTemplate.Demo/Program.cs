@@ -1,6 +1,6 @@
 ﻿using SharpTemplate;
 
-string[] files = ["demo1.txt", "demo2.txt", "demo3.txt", "demo4.txt", "demo5.txt", "demo6.txt"];
+string[] files = [/*"demo1.txt", "demo2.txt", "demo3.txt", "demo4.txt",*/ "demo5.txt"/*, "demo6.txt"*/];
 
 foreach (var file in files)
 {
