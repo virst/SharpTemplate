@@ -16,12 +16,36 @@ namespace SharpTemplate
             UserData.RegisterType<TemplateProcessorDocument>();
         }
 
-        public void Echo(object o)
+        public void Write(object o)
         {
             sb.Append(o);
         }
+
+        public void WriteLn(object o)
+        {
+            sb.Append(o);
+            sb.AppendLine();
+        }
+
+        public void WriteLn()
+        {
+            sb.AppendLine();
+        }
     }
 
+    public class TemplateProcessor<T>(string template) : TemplateProcessor(template)
+    {
+        static TemplateProcessor()
+        {
+            UserData.RegisterType<T>();
+        }
+
+        public string Processing(T data)
+        {
+            _script.Globals["data"] = UserData.Create(data);
+            return base.Processing();
+        }
+    }
     public class TemplateProcessor
     {
         private readonly string _template;
@@ -53,19 +77,20 @@ namespace SharpTemplate
             public readonly List<CodeBlock> Childrens = [];
             private BlockType Type = BlockType.None;
 
-            public virtual void Processing(StringBuilder sb, string template, Script script)
+            public virtual bool Processing(StringBuilder sb, string template, Script script)
             {
-                if (Type == BlockType.Else) return;
+                if (Type == BlockType.Else) return true;
 
                 if (Childrens.Count == 0)
                 {
                     sb.Append(template.Substring(Start, Length));
-                    return;
+                    return true;
                 }
                 foreach (CodeBlock c in Childrens)
                 {
                     c.Processing(sb, template, script);
                 }
+                return true;
             }
 
             public void PreProcessing(string template)
@@ -172,7 +197,7 @@ namespace SharpTemplate
 
             private class CodeBlockLua(int start) : CodeBlock(start)
             {
-                public override void Processing(StringBuilder sb, string template, Script script)
+                public override bool Processing(StringBuilder sb, string template, Script script)
                 {
                     var tmp = template.Substring(Start + 1, Length - 3);
                     if (Type == BlockType.Expression)
@@ -184,12 +209,13 @@ namespace SharpTemplate
                     {
                         script.DoString(tmp);
                     }
+                    return true;
                 }
             }
             private class CodeBlockLoop(int start) : CodeBlockLua(start)
             {
                 public string? Code;
-                public override void Processing(StringBuilder sb, string template, Script script)
+                public override bool Processing(StringBuilder sb, string template, Script script)
                 {
                     if (Code is null) throw new Exception();
 
@@ -201,12 +227,13 @@ namespace SharpTemplate
                         foreach (var c in Childrens)
                             c.Processing(sb, template, script);
                     }
+                    return true;
                 }
             }
 
             private class CodeBlockCondition(int start) : CodeBlockLoop(start)
             {
-                public override void Processing(StringBuilder sb, string template, Script script)
+                public override bool Processing(StringBuilder sb, string template, Script script)
                 {
                     var ll = Childrens.Select(t => template.Substring(t.Start, t.Length)).ToArray();
                     var result = script.DoString("return " + Code);
@@ -221,6 +248,7 @@ namespace SharpTemplate
                         foreach (var c in Childrens.Where(t => ElsePos is not null && t.Start > ElsePos))
                             c.Processing(sb, template, script);
                     }
+                    return true;
                 }
             }
         }

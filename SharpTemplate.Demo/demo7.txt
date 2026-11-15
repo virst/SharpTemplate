@@ -1,0 +1,6 @@
+Hi!
+<?#
+this:WriteLn(data:Say('Привет'))
+data.Name = 'Petr'
+this:WriteLn(data:Say('Теперь меня зовут ' .. data.Name))
+?>end;
