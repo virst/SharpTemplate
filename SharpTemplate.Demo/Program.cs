@@ -6,7 +6,10 @@ foreach (var file in files)
 {
     Console.WriteLine("{0}:", file);
     var template = File.ReadAllText(file);
-    var tmp = TemplateProcessor.TemplateProces(template);
+
+    TemplateProcessor tp = new TemplateProcessor(template);
+    var tmp = tp.Processing();
+
     Console.WriteLine(tmp);
     Console.WriteLine();
 }
